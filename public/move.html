@@ -219,7 +219,6 @@ html, body {
 .legend-dot.med { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
 .legend-dot.low { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
 
-.refresh-btn {
   position: absolute; top: 16px; right: 16px;
   background: rgba(2,10,24,0.9);
   border: 1px solid var(--cyan);
@@ -229,7 +228,6 @@ html, body {
   letter-spacing: 0.18em; text-transform: uppercase;
   cursor: pointer; z-index: 1000;
 }
-.refresh-btn:hover {
   background: rgba(0,240,255,0.1);
   box-shadow: 0 0 16px rgba(0,240,255,0.3);
 }
@@ -264,7 +262,6 @@ html, body {
   <div class="c">
     <span><span class="dot live"></span><span id="status">EN VIVO</span></span>
     <span style="color:var(--fg-3);">·</span>
-    <span id="clock">--:-- SV</span>
   </div>
   <div class="r">
     <a href="/" style="color:var(--cyan-dim); text-decoration:none;">← MENÚ</a>
@@ -310,7 +307,6 @@ html, body {
 
   <main style="position: relative;">
     <div id="map"></div>
-    <button class="refresh-btn" id="refresh-btn">↻ Actualizar</button>
     <div class="legend">
       <div class="legend-row"><span class="legend-dot high"></span><span>M ≥ 4.0</span></div>
       <div class="legend-row"><span class="legend-dot med"></span><span>M 3.0 - 3.9</span></div>
@@ -335,15 +331,6 @@ const STELLA_MARIS_URL = 'https://izemgxvytxhpxuzvgexs.supabase.co';
 const FETCH_URL = '/api/jarvis';
 
 // ===== Reloj SV =====
-function tick() {
-  const now = new Date();
-  const fmt = new Intl.DateTimeFormat('es-SV', {
-    timeZone: 'America/El_Salvador',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-  });
-  document.getElementById('clock').textContent = fmt.format(now) + ' SV';
-}
-setInterval(tick, 1000); tick();
 
 // ===== Mapa Leaflet =====
 const map = L.map('map', {
@@ -536,7 +523,6 @@ function renderData(sismosResp, volResp) {
   }).join('');
 }
 
-document.getElementById('refresh-btn').addEventListener('click', loadData);
 
 // Auto-refresh cada 60 seg
 setInterval(loadData, 60000);

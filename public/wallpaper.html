@@ -132,7 +132,6 @@ html, body {
 <div class="scan"></div>
 
 <div class="brand-top">JARVIS · AKASHA SEC</div>
-<div class="clock" id="clock">--:--</div>
 
 <div class="holo">
   <div class="halo"></div>
@@ -175,7 +174,6 @@ function tick() {
     timeZone: 'America/El_Salvador',
     hour: '2-digit', minute: '2-digit', hour12: false
   });
-  document.getElementById('clock').textContent = fmtTime.format(now);
   const fmtDate = new Intl.DateTimeFormat('es-SV', {
     timeZone: 'America/El_Salvador',
     day: '2-digit', month: 'short', year: 'numeric'
