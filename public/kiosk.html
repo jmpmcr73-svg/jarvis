@@ -571,18 +571,19 @@ let voicesReady = false;
 // === Reloj ===
 function updateClock() {
   const now = new Date();
-  const sv = new Date(now.getTime() - 6 * 3600 * 1000);
-  const h = sv.getUTCHours().toString().padStart(2, '0');
-  const m = sv.getUTCMinutes().toString().padStart(2, '0');
-  const s = sv.getUTCSeconds().toString().padStart(2, '0');
-  document.getElementById('clock').textContent = `${h}:${m}:${s} SV`;
+  const fmt = new Intl.DateTimeFormat('es-SV', {
+    timeZone: 'America/El_Salvador',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+  document.getElementById('clock').textContent = fmt.format(now) + ' SV';
 }
 function updateFooterDate() {
   const now = new Date();
-  const sv = new Date(now.getTime() - 6 * 3600 * 1000);
-  const dd = sv.getUTCDate();
-  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  document.getElementById('footer-date').textContent = `${dd}-${months[sv.getUTCMonth()]}-${sv.getUTCFullYear()}`;
+  const fmt = new Intl.DateTimeFormat('es-SV', {
+    timeZone: 'America/El_Salvador',
+    day: '2-digit', month: 'short', year: 'numeric'
+  });
+  document.getElementById('footer-date').textContent = fmt.format(now).replace(/ /g, '-').replace('.', '');
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -695,17 +696,45 @@ function speakResponse(text) {
   setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'es-ES';
-    u.rate = 1.0;
-    u.pitch = 1.0;
+    u.rate = 0.95;     // Ligeramente más lento · suena más profesional
+    u.pitch = 0.85;    // Más grave · más masculino · estilo Jarvis
     u.volume = 1.0;
 
-    // Buscar voz española
+    // Buscar voz española · MASCULINA priorizada
     const voices = window.speechSynthesis.getVoices();
     const esVoices = voices.filter(v => v.lang.startsWith('es'));
-    const preferred = esVoices.find(v => /Mónica|Monica|Paulina|Marisol|Diego|Jorge|Helena/i.test(v.name)) || esVoices[0];
+
+    // Lista priorizada · masculinas españolas primero
+    const masculinas = [
+      'Diego',           // iOS español Argentina · masculino
+      'Jorge',           // iOS español España · masculino
+      'Carlos',          // Algunas variantes
+      'Juan',            // Variantes
+      'Roberto',         // Variantes
+      'Enrique',         // Variantes
+      'Google español',  // Android · neutral pero suele sonar masculino
+      'Spanish (Spain)', // Genérico que suele ser masculino
+    ];
+
+    // Buscar voz masculina por nombre exacto o parcial
+    let preferred = null;
+    for (const name of masculinas) {
+      preferred = esVoices.find(v => v.name.toLowerCase().includes(name.toLowerCase()));
+      if (preferred) break;
+    }
+
+    // Fallback · cualquier voz que NO sea femenina conocida
+    if (!preferred) {
+      const femeninas = /Mónica|Monica|Paulina|Marisol|Esperanza|Helena|Lucia|Sofía|Ana/i;
+      preferred = esVoices.find(v => !femeninas.test(v.name));
+    }
+
+    // Último fallback · primera voz española disponible
+    if (!preferred) preferred = esVoices[0];
+
     if (preferred) {
       u.voice = preferred;
-      console.log('[TTS] Usando voz:', preferred.name);
+      console.log('[TTS] Voz seleccionada:', preferred.name, preferred.lang);
     }
 
     u.onstart = () => console.log('[TTS] Speaking');

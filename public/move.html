@@ -337,11 +337,11 @@ const FETCH_URL = '/api/jarvis';
 // ===== Reloj SV =====
 function tick() {
   const now = new Date();
-  const sv = new Date(now.getTime() - 6 * 3600 * 1000);
-  const h = String(sv.getUTCHours()).padStart(2, '0');
-  const m = String(sv.getUTCMinutes()).padStart(2, '0');
-  const s = String(sv.getUTCSeconds()).padStart(2, '0');
-  document.getElementById('clock').textContent = `${h}:${m}:${s} SV`;
+  const fmt = new Intl.DateTimeFormat('es-SV', {
+    timeZone: 'America/El_Salvador',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+  document.getElementById('clock').textContent = fmt.format(now) + ' SV';
 }
 setInterval(tick, 1000); tick();
 
@@ -388,8 +388,10 @@ function addSismoMarker(s) {
     fillOpacity: 0.6,
   });
   const horaUtc = new Date(s.hora_utc);
-  const horaSv = new Date(horaUtc.getTime() - 6 * 3600 * 1000);
-  const horaStr = `${String(horaSv.getUTCHours()).padStart(2,'0')}:${String(horaSv.getUTCMinutes()).padStart(2,'0')} SV`;
+  const horaStr = new Intl.DateTimeFormat('es-SV', {
+    timeZone: 'America/El_Salvador',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(horaUtc) + ' SV';
   marker.bindPopup(`
     <strong>M${Number(s.magnitud).toFixed(1)}</strong><br>
     Profundidad: ${s.profundidad_km} km<br>
@@ -491,8 +493,10 @@ function renderData(sismosResp, volResp) {
   if (sismosData.evento_mas_reciente) {
     const e = sismosData.evento_mas_reciente;
     const horaUtc = new Date(e.hora_utc);
-    const horaSv = new Date(horaUtc.getTime() - 6 * 3600 * 1000);
-    const horaStr = `${String(horaSv.getUTCHours()).padStart(2,'0')}:${String(horaSv.getUTCMinutes()).padStart(2,'0')}`;
+    const horaStr = new Intl.DateTimeFormat('es-SV', {
+      timeZone: 'America/El_Salvador',
+      hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(horaUtc);
     const m = Number(e.magnitud);
     const cls = m >= 4 ? 'high' : (m >= 3 ? 'med' : 'low');
     list.innerHTML = `
