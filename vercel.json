@@ -6,7 +6,8 @@
   "rewrites": [
     { "source": "/kiosk", "destination": "/kiosk.html" },
     { "source": "/wallpaper", "destination": "/wallpaper.html" },
-    { "source": "/move", "destination": "/move.html" }
+    { "source": "/move", "destination": "/move.html" },
+    { "source": "/agri", "destination": "/agri.html" }
   ],
   "headers": [
     {

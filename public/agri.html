@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000510">
+<title>iAgri · idworld</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #000510; --abyss: #020a18; --cyan: #00f0ff; --cyan-dim: #00b8c4;
+  --line: #0d3a5c; --amber: #ffaa00; --crimson: #ff3a4f; --emerald: #00ff8c;
+  --green: #36b37e;
+  --fg: #e6f5ff; --fg-2: #92b8d4; --fg-3: #547294;
+  --fs: 'Orbitron', sans-serif;
+  --fm: 'JetBrains Mono', ui-monospace, monospace;
+  --fd: 'Cormorant Garamond', Georgia, serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--void); color: var(--fg);
+  font-family: var(--fs); min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.topbar {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  padding: 12px 24px;
+  background: linear-gradient(to bottom, rgba(2,10,24,0.95), rgba(2,10,24,0.7));
+  border-bottom: 1px solid var(--line);
+  font-family: var(--fm); font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--fg-2);
+}
+.topbar .l, .topbar .r { display: flex; gap: 20px; align-items: center; }
+.topbar .r { justify-content: flex-end; }
+.topbar .c { display: flex; gap: 16px; justify-content: center; align-items: center; color: var(--fg-3); }
+.topbar strong {
+  font-family: var(--fs); font-weight: 900; font-size: 13px;
+  color: var(--green); letter-spacing: 0.3em;
+}
+.dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 12px var(--green);
+  margin-right: 8px;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+.topbar a { color: var(--cyan-dim); text-decoration: none; }
+
+.container {
+  max-width: 1200px; margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.intro {
+  text-align: center;
+  margin-bottom: 50px;
+}
+.intro h1 {
+  font-size: clamp(40px, 8vw, 72px);
+  font-weight: 900; letter-spacing: 0.1em;
+  color: var(--green);
+  text-shadow: 0 0 30px rgba(54,179,126,0.4);
+  margin-bottom: 12px;
+}
+.intro .subtitle {
+  font-family: var(--fd); font-style: italic;
+  font-size: clamp(16px, 3vw, 22px);
+  color: var(--fg-2);
+}
+.intro .desc {
+  font-family: var(--fm); font-size: 11px;
+  letter-spacing: 0.15em; color: var(--fg-3);
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+/* Grid de áreas */
+.areas-grid {
+  display: grid; gap: 16px;
+  grid-template-columns: 1fr;
+  margin-bottom: 40px;
+}
+@media (min-width: 700px) {
+  .areas-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1000px) {
+  .areas-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.area-card {
+  background: linear-gradient(135deg, rgba(13,58,92,0.3), rgba(5,21,40,0.5));
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--green);
+  padding: 24px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 200px;
+  display: flex; flex-direction: column;
+}
+.area-card::before {
+  content: ''; position: absolute; top: -1px; right: -1px;
+  width: 14px; height: 14px;
+  border-top: 1px solid var(--green);
+  border-right: 1px solid var(--green);
+}
+.area-card:hover {
+  border-left-color: var(--cyan);
+  box-shadow: 0 0 30px rgba(54,179,126,0.15);
+  transform: translateY(-2px);
+}
+.area-card .label {
+  font-family: var(--fm); font-size: 9px; letter-spacing: 0.25em;
+  color: var(--green); text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.area-card .name {
+  font-family: var(--fd); font-style: italic;
+  font-size: 28px; font-weight: 500;
+  color: var(--fg); margin-bottom: 12px;
+  line-height: 1.1;
+}
+.area-card .desc {
+  font-family: var(--fm); font-size: 11px;
+  color: var(--fg-3); line-height: 1.5;
+  margin-bottom: 16px;
+  flex: 1;
+}
+.area-card .stats {
+  font-family: var(--fm); font-size: 11px;
+  color: var(--cyan-dim);
+  padding-top: 12px;
+  border-top: 1px solid rgba(13,58,92,0.5);
+  min-height: 32px;
+}
+.area-card .stats strong { color: var(--green); font-weight: 700; }
+.area-card .stats.loading { color: var(--fg-3); font-style: italic; }
+
+.input-area {
+  margin-top: 40px;
+  background: linear-gradient(135deg, rgba(2,10,24,0.7), rgba(5,21,40,0.9));
+  border: 1px solid var(--line);
+  padding: 24px;
+}
+.input-area .title {
+  font-family: var(--fm); font-size: 10px; letter-spacing: 0.25em;
+  color: var(--cyan); text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.input-area form {
+  display: flex; gap: 12px;
+  flex-wrap: wrap;
+}
+.input-area input {
+  flex: 1; min-width: 200px;
+  background: rgba(2,10,24,0.8);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-family: var(--fm); font-size: 13px;
+  padding: 12px 16px;
+}
+.input-area input:focus {
+  outline: none; border-color: var(--cyan);
+}
+.input-area button {
+  background: rgba(54,179,126,0.15);
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-family: var(--fs); font-size: 11px;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 12px 24px;
+  cursor: pointer; transition: all 0.2s;
+}
+.input-area button:hover {
+  background: rgba(54,179,126,0.3);
+  box-shadow: 0 0 16px rgba(54,179,126,0.3);
+}
+.input-area button:disabled {
+  opacity: 0.4; cursor: not-allowed;
+}
+
+.response {
+  margin-top: 20px;
+  background: rgba(2,10,24,0.6);
+  border-left: 2px solid var(--cyan);
+  padding: 16px 20px;
+  font-family: var(--fm); font-size: 13px;
+  color: var(--fg);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  display: none;
+}
+.response.show { display: block; }
+.response .meta {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(13,58,92,0.5);
+  font-size: 10px;
+  color: var(--fg-3);
+  letter-spacing: 0.1em;
+}
+
+.footer {
+  text-align: center;
+  font-family: var(--fm);
+  font-size: 9px; letter-spacing: 0.2em;
+  color: var(--fg-3); text-transform: uppercase;
+  margin-top: 50px;
+  padding-bottom: 30px;
+}
+.footer strong { color: var(--green); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="l">
+    <span><strong>iAGRI</strong></span>
+    <span style="color:var(--fg-3);">·</span>
+    <span>AGRICULTURA · IoT · PyMEs</span>
+  </div>
+  <div class="c">
+    <span><span class="dot"></span>EN VIVO</span>
+  </div>
+  <div class="r">
+    <a href="/">← MENÚ</a>
+    <a href="/kiosk">KIOSK</a>
+    <a href="/move">MOVE</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="intro">
+    <h1>iAGRI</h1>
+    <div class="subtitle">5 áreas operativas · datos en vivo</div>
+    <div class="desc">CAPA INFORMACIÓN · KIOSK · ALEJANDRÍA STEAM LABS</div>
+  </div>
+
+  <div class="areas-grid">
+
+    <div class="area-card" data-query="estado de Coopedota">
+      <div class="label">CAFÉ · COSTA RICA</div>
+      <div class="name">Coopedota</div>
+      <div class="desc">Productores · fincas · cumplimiento EUDR · cosechas · ventas digitales</div>
+      <div class="stats loading" id="stats-coopedota">Cargando...</div>
+    </div>
+
+    <div class="area-card" data-query="estado Hidroexpo Carolina Reaper">
+      <div class="label">CHILES · ULTRA-PICANTES</div>
+      <div class="name">Hidroexpo</div>
+      <div class="desc">Carolina Reaper · hidronúcleos · farmacéutico · banco de semillas</div>
+      <div class="stats loading" id="stats-hidroexpo">Cargando...</div>
+    </div>
+
+    <div class="area-card" data-query="mediciones IoT sensores">
+      <div class="label">SENSORES · TIEMPO REAL</div>
+      <div class="name">IoT Básico</div>
+      <div class="desc">Mediciones · humedad · temperatura · pH · alertas · sensores en campo</div>
+      <div class="stats loading" id="stats-iot">Cargando...</div>
+    </div>
+
+    <div class="area-card" data-query="estado de las PyMEs">
+      <div class="label">EMPRESAS · CENTROAMÉRICA</div>
+      <div class="name">PyMEs</div>
+      <div class="desc">Microempresas · oficios · cotizaciones · mensajería · cobranzas</div>
+      <div class="stats loading" id="stats-pyme">Cargando...</div>
+    </div>
+
+    <div class="area-card" data-query="estado Project One SV greenhouse">
+      <div class="label">GREENHOUSE · SAN VICENTE</div>
+      <div class="name">Project One SV</div>
+      <div class="desc">Invernadero 35 hectáreas · 47 nodos IoT · 2 rovers SV-1 · digital twin</div>
+      <div class="stats loading" id="stats-projectone">Cargando...</div>
+    </div>
+
+    <div class="area-card" style="border-left-color:var(--cyan-dim);opacity:0.65;cursor:default;">
+      <div class="label" style="color:var(--cyan-dim);">PRÓXIMAMENTE</div>
+      <div class="name">FincaOS</div>
+      <div class="desc">Plataforma independiente · café · cacao · aguacate · ingeniería agrícola</div>
+      <div class="stats" style="color:var(--fg-3);">En desarrollo · 22 tablas</div>
+    </div>
+
+  </div>
+
+  <div class="input-area">
+    <div class="title">Pregúntale a Jarvis · dominio iAgri</div>
+    <form id="ask-form">
+      <input type="text" id="ask-input" placeholder='Ej: "¿Cuántas hectáreas tiene Coopedota?"' autocomplete="off">
+      <button type="submit" id="ask-btn">Consultar</button>
+    </form>
+    <div class="response" id="response"></div>
+  </div>
+
+  <div class="footer">
+    JARVIS DOMINIO <strong>iAGRI</strong> · CAPA LIGHT (KIOSK) ·
+    PARA OPERACIÓN PROFUNDA · ABRIR APP iAGRI
+  </div>
+
+</div>
+
+<script>
+const API_URL = '/api/jarvis';
+
+async function loadAreaStats(areaId, query) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, origen_canal: 'web_agri' })
+    });
+    const data = await res.json();
+    const datos = data?.respuesta_pantalla?.datos || {};
+    const el = document.getElementById('stats-' + areaId);
+    if (!el) return;
+    
+    // Mostrar primeros 2-3 KPIs relevantes
+    const keys = Object.keys(datos).slice(0, 3);
+    if (keys.length === 0) {
+      el.textContent = 'Sin datos disponibles';
+      el.classList.remove('loading');
+      return;
+    }
+    
+    const html = keys.map(k => {
+      const v = datos[k];
+      const label = k.replace(/_/g, ' ').toLowerCase();
+      const value = (typeof v === 'object') 
+        ? (Array.isArray(v) ? v.length + ' items' : 'datos')
+        : v;
+      return `${label}: <strong>${value}</strong>`;
+    }).join(' · ');
+    
+    el.innerHTML = html;
+    el.classList.remove('loading');
+  } catch (e) {
+    const el = document.getElementById('stats-' + areaId);
+    if (el) {
+      el.textContent = 'Error al cargar';
+      el.classList.remove('loading');
+    }
+  }
+}
+
+// Cargar stats de cada área en paralelo
+loadAreaStats('coopedota', 'estado de Coopedota');
+loadAreaStats('hidroexpo', 'estado Hidroexpo Carolina Reaper');
+loadAreaStats('iot', 'mediciones IoT sensores');
+loadAreaStats('pyme', 'estado de las PyMEs');
+loadAreaStats('projectone', 'estado Project One SV greenhouse');
+
+// Click en card · enviar query
+document.querySelectorAll('.area-card[data-query]').forEach(card => {
+  card.addEventListener('click', () => {
+    const q = card.dataset.query;
+    document.getElementById('ask-input').value = q;
+    document.getElementById('ask-form').dispatchEvent(new Event('submit'));
+  });
+});
+
+// Form ask
+document.getElementById('ask-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('ask-input');
+  const btn = document.getElementById('ask-btn');
+  const responseEl = document.getElementById('response');
+  const q = input.value.trim();
+  if (!q) return;
+  
+  btn.disabled = true;
+  btn.textContent = 'Consultando...';
+  responseEl.classList.remove('show');
+  
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q, origen_canal: 'web_agri' })
+    });
+    const data = await res.json();
+    
+    const voz = data.respuesta_voz || 'Sin respuesta';
+    const meta = data.metadata || {};
+    
+    responseEl.innerHTML = voz + 
+      `<div class="meta">Dominio: ${meta.dominio_enrutado || '?'} · ` +
+      `Modelo: ${meta.modelo_usado || '?'} · ` +
+      `${meta.latencia_total_ms || 0}ms · ` +
+      `${meta.tokens_input || 0} in / ${meta.tokens_output || 0} out</div>`;
+    responseEl.classList.add('show');
+  } catch (e) {
+    responseEl.textContent = 'Error: ' + e.message;
+    responseEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Consultar';
+  }
+});
+</script>
+
+</body>
+</html>
