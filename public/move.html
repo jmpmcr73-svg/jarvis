@@ -9,8 +9,6 @@
 <title>MOVE · idworld</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
@@ -322,9 +320,6 @@ html, body {
 
 <div class="loading" id="loading">CARGANDO MOVE...</div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""></script>
 <script>
 // ============================================================
 // MOVE Dashboard · sismos en tiempo real
@@ -334,36 +329,64 @@ const STELLA_MARIS_URL = 'https://izemgxvytxhpxuzvgexs.supabase.co';
 // Fetch directo a KRONOS via /api/sismos · sin LLM · ~200ms
 const FETCH_URL = '/api/sismos';
 
-// ===== Reloj SV =====
-function tick() {
-  const now = new Date();
-  const fmt = new Intl.DateTimeFormat('es-SV', {
-    timeZone: 'America/El_Salvador',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+// ===== Mapa Mapbox =====
+let map;
+let sismoLayer;
+let volcanLayer;
+let mapReady = false;
+
+async function initMap() {
+  // 1. Fetch token desde /api/config
+  let mapboxToken;
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    mapboxToken = cfg.mapbox_token;
+    if (!mapboxToken) throw new Error('No mapbox token in config');
+  } catch (e) {
+    console.error('[MOVE] No se pudo obtener token Mapbox:', e);
+    document.getElementById('map').innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--crimson);font-family:var(--fm);font-size:11px;text-align:center;padding:20px;">' +
+      'Error: No se pudo cargar el mapa.<br>Verificar MAPBOX_TOKEN en Vercel.</div>';
+    return;
+  }
+
+  // 2. Cargar Mapbox GL JS dinámicamente
+  await new Promise((resolve, reject) => {
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css';
+    document.head.appendChild(css);
+
+    const script = document.createElement('script');
+    script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
   });
-  document.getElementById('clock').textContent = fmt.format(now) + ' SV';
+
+  // 3. Inicializar mapa
+  mapboxgl.accessToken = mapboxToken;
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: [-88.9, 13.5],  // [lng, lat] formato Mapbox
+    zoom: 7,
+    minZoom: 5,
+    maxZoom: 14,
+    attributionControl: false,
+  });
+
+  map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+  map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
+
+  // Storage de markers (Mapbox usa markers individuales, no layerGroups)
+  sismoLayer = { markers: [], clearLayers() { this.markers.forEach(m => m.remove()); this.markers = []; } };
+  volcanLayer = { markers: [], clearLayers() { this.markers.forEach(m => m.remove()); this.markers = []; } };
+
+  await new Promise(resolve => map.on('load', resolve));
+  mapReady = true;
+  console.log('[MOVE] Mapa Mapbox cargado');
 }
-setInterval(tick, 1000); tick();
-
-// ===== Mapa Leaflet =====
-const map = L.map('map', {
-  center: [13.5, -88.9],  // El Salvador centro
-  zoom: 7,
-  minZoom: 5,
-  maxZoom: 12,
-  zoomControl: true,
-  attributionControl: true,
-});
-
-// Tile dark theme
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap · CARTO',
-  subdomains: 'abcd',
-  maxZoom: 19,
-}).addTo(map);
-
-const sismoLayer = L.layerGroup().addTo(map);
-const volcanLayer = L.layerGroup().addTo(map);
 
 function magColor(m) {
   m = Number(m);
@@ -377,56 +400,73 @@ function magRadius(m) {
 }
 
 function addSismoMarker(s) {
+  if (!mapReady || !map) return null;
   const color = magColor(s.magnitud);
-  const radius = magRadius(s.magnitud);
-  const marker = L.circleMarker([s.lat, s.lng], {
-    radius,
-    fillColor: color,
-    color: color,
-    weight: 1,
-    opacity: 1,
-    fillOpacity: 0.6,
-  });
+  const size = magRadius(s.magnitud);
+
+  // Crear elemento DOM para el marker
+  const el = document.createElement('div');
+  el.style.cssText = `
+    width: ${size * 2}px; height: ${size * 2}px;
+    background: ${color}; border-radius: 50%;
+    opacity: 0.7; border: 1px solid ${color};
+    box-shadow: 0 0 ${size}px ${color};
+    cursor: pointer;
+  `;
+
   const horaUtc = new Date(s.hora_utc);
   const horaStr = new Intl.DateTimeFormat('es-SV', {
     timeZone: 'America/El_Salvador',
     hour: '2-digit', minute: '2-digit', hour12: false
   }).format(horaUtc) + ' SV';
-  marker.bindPopup(`
-    <strong>M${Number(s.magnitud).toFixed(1)}</strong><br>
-    Profundidad: ${s.profundidad_km} km<br>
-    Hora: ${horaStr}<br>
-    Severidad: ${s.severidad || 'N/A'}<br>
-    Fuente: ${s.fuente || 'N/A'}
-  `);
-  marker.addTo(sismoLayer);
+
+  const popup = new mapboxgl.Popup({ offset: size + 4, closeButton: false })
+    .setHTML(`
+      <strong>M${Number(s.magnitud).toFixed(1)}</strong><br>
+      Profundidad: ${s.profundidad_km} km<br>
+      Hora: ${horaStr}<br>
+      Severidad: ${s.severidad || 'N/A'}<br>
+      Fuente: ${s.fuente || 'N/A'}
+    `);
+
+  const marker = new mapboxgl.Marker({ element: el })
+    .setLngLat([s.lng, s.lat])
+    .setPopup(popup)
+    .addTo(map);
+
+  sismoLayer.markers.push(marker);
   return marker;
 }
 
 function addVolcanMarker(v) {
+  if (!mapReady || !map || !v.lat || !v.lng) return null;
   const color = (v.nivel_alerta_actual === 'NORMAL' || !v.nivel_alerta_actual) ? '#00ff8c' : '#ffaa00';
-  const triangle = L.divIcon({
-    html: `<div style="
-      width: 0; height: 0;
-      border-left: 12px solid transparent;
-      border-right: 12px solid transparent;
-      border-bottom: 20px solid ${color};
-      filter: drop-shadow(0 0 6px ${color});
-    "></div>`,
-    className: 'volcan-marker',
-    iconSize: [24, 24],
-    iconAnchor: [12, 20],
-  });
-  if (v.lat && v.lng) {
-    const marker = L.marker([v.lat, v.lng], { icon: triangle });
-    marker.bindPopup(`
+
+  const el = document.createElement('div');
+  el.style.cssText = `
+    width: 0; height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-bottom: 20px solid ${color};
+    filter: drop-shadow(0 0 6px ${color});
+    cursor: pointer;
+  `;
+
+  const popup = new mapboxgl.Popup({ offset: 24, closeButton: false })
+    .setHTML(`
       <strong>${v.nombre}</strong><br>
       Estado: ${v.estado_actividad || 'N/A'}<br>
       Alerta: ${v.nivel_alerta_actual || 'NORMAL'}<br>
       ${v.forecast_mensaje ? '<br>' + v.forecast_mensaje : ''}
     `);
-    marker.addTo(volcanLayer);
-  }
+
+  const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+    .setLngLat([v.lng, v.lat])
+    .setPopup(popup)
+    .addTo(map);
+
+  volcanLayer.markers.push(marker);
+  return marker;
 }
 
 // ===== Fetch datos =====
@@ -476,9 +516,9 @@ function renderData(data) {
   });
 
   // Centrar mapa en sismo más reciente si existe
-  if (eventos.length > 0) {
+  if (eventos.length > 0 && mapReady && map) {
     const e = eventos[0];
-    map.setView([e.latitud, e.longitud], 7);
+    map.flyTo({ center: [e.longitud, e.latitud], zoom: 7, duration: 1500 });
   }
 
   // Listar eventos sidebar (top 10)
@@ -539,13 +579,11 @@ function renderData(data) {
   }
 }
 
-document.getElementById('refresh-btn').addEventListener('click', loadData);
-
-// Auto-refresh cada 60 seg
-setInterval(loadData, 60000);
-
-// Initial load
-loadData();
+// Initial: esperar mapa · luego cargar datos · luego auto-refresh
+initMap().then(() => {
+  loadData();
+  setInterval(loadData, 60000);
+});
 </script>
 
 </body>
