@@ -219,6 +219,7 @@ html, body {
 .legend-dot.med { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
 .legend-dot.low { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
 
+.refresh-btn {
   position: absolute; top: 16px; right: 16px;
   background: rgba(2,10,24,0.9);
   border: 1px solid var(--cyan);
@@ -228,6 +229,7 @@ html, body {
   letter-spacing: 0.18em; text-transform: uppercase;
   cursor: pointer; z-index: 1000;
 }
+.refresh-btn:hover {
   background: rgba(0,240,255,0.1);
   box-shadow: 0 0 16px rgba(0,240,255,0.3);
 }
@@ -262,6 +264,7 @@ html, body {
   <div class="c">
     <span><span class="dot live"></span><span id="status">EN VIVO</span></span>
     <span style="color:var(--fg-3);">·</span>
+    <span id="clock">--:-- SV</span>
   </div>
   <div class="r">
     <a href="/" style="color:var(--cyan-dim); text-decoration:none;">← MENÚ</a>
@@ -307,6 +310,7 @@ html, body {
 
   <main style="position: relative;">
     <div id="map"></div>
+    <button class="refresh-btn" id="refresh-btn">↻ Actualizar</button>
     <div class="legend">
       <div class="legend-row"><span class="legend-dot high"></span><span>M ≥ 4.0</span></div>
       <div class="legend-row"><span class="legend-dot med"></span><span>M 3.0 - 3.9</span></div>
@@ -327,10 +331,19 @@ html, body {
 // ============================================================
 
 const STELLA_MARIS_URL = 'https://izemgxvytxhpxuzvgexs.supabase.co';
-// Fetch de eventos via proxy /api/jarvis (que llama jarvis-domain-idworld)
-const FETCH_URL = '/api/jarvis';
+// Fetch directo a KRONOS via /api/sismos · sin LLM · ~200ms
+const FETCH_URL = '/api/sismos';
 
 // ===== Reloj SV =====
+function tick() {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat('es-SV', {
+    timeZone: 'America/El_Salvador',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+  document.getElementById('clock').textContent = fmt.format(now) + ' SV';
+}
+setInterval(tick, 1000); tick();
 
 // ===== Mapa Leaflet =====
 const map = L.map('map', {
@@ -420,31 +433,13 @@ function addVolcanMarker(v) {
 async function loadData() {
   document.getElementById('loading').classList.remove('hidden');
   try {
-    // Pedimos sismos
-    const resSismos = await fetch(FETCH_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: 'lista todos los sismos detalladamente últimas 24 horas con coordenadas',
-        origen_canal: 'web_move',
-        origen_persona_id: 'AKS-JOSE'
-      })
-    });
-    const dataSismos = await resSismos.json();
-    
-    // Pedimos volcanes
-    const resVol = await fetch(FETCH_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: 'estado de los volcanes monitoreados',
-        origen_canal: 'web_move',
-        origen_persona_id: 'AKS-JOSE'
-      })
-    });
-    const dataVol = await resVol.json();
-
-    renderData(dataSismos, dataVol);
+    // GET directo a /api/sismos · devuelve sismos + volcanes en 1 fetch · ~200ms
+    const res = await fetch(FETCH_URL);
+    if (!res.ok) {
+      throw new Error('HTTP ' + res.status);
+    }
+    const data = await res.json();
+    renderData(data);
   } catch (e) {
     console.error('[MOVE] Error:', e);
     document.getElementById('event-list').innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
@@ -453,76 +448,98 @@ async function loadData() {
   }
 }
 
-function renderData(sismosResp, volResp) {
+function renderData(data) {
   // Limpiar layers
   sismoLayer.clearLayers();
   volcanLayer.clearLayers();
 
-  // Sismos · datos vienen en respuesta_pantalla.datos · pero también en raw via metadata
-  // Como el LLM resume · necesitamos que devuelva detalles · alternativa: pegar a Supabase directo
-  // Solo para testing inicial · usamos respuesta_pantalla.datos
-  const sismosData = sismosResp?.respuesta_pantalla?.datos || {};
-  const total = sismosData.total ?? 0;
-  const maxMag = sismosData.max_magnitud ?? '—';
+  const sismos = data.sismos || {};
+  const eventos = sismos.eventos || [];
+  const total = sismos.total ?? 0;
+  const maxMag = sismos.max_magnitud ?? 0;
+
   document.getElementById('kpi-total').textContent = total;
-  document.getElementById('kpi-max').textContent = typeof maxMag === 'number' ? maxMag.toFixed(1) : maxMag;
+  document.getElementById('kpi-max').textContent = total > 0 ? Number(maxMag).toFixed(1) : '—';
   document.getElementById('event-count').textContent = total;
 
-  // Si hay evento_mas_reciente · marcarlo
-  if (sismosData.evento_mas_reciente) {
-    const e = sismosData.evento_mas_reciente;
-    addSismoMarker(e);
-    map.setView([e.lat, e.lng], 8);
+  // Agregar TODOS los markers · cada sismo en el mapa
+  eventos.forEach(s => {
+    addSismoMarker({
+      magnitud: s.magnitud,
+      profundidad_km: s.profundidad_km,
+      lat: s.latitud,
+      lng: s.longitud,
+      hora_utc: s.timestamp_origen,
+      fuente: s.fuente_externa,
+      severidad: s.severidad,
+    });
+  });
+
+  // Centrar mapa en sismo más reciente si existe
+  if (eventos.length > 0) {
+    const e = eventos[0];
+    map.setView([e.latitud, e.longitud], 7);
   }
 
-  // Listar eventos sidebar
+  // Listar eventos sidebar (top 10)
   const list = document.getElementById('event-list');
-  if (sismosData.evento_mas_reciente) {
-    const e = sismosData.evento_mas_reciente;
-    const horaUtc = new Date(e.hora_utc);
-    const horaStr = new Intl.DateTimeFormat('es-SV', {
-      timeZone: 'America/El_Salvador',
-      hour: '2-digit', minute: '2-digit', hour12: false
-    }).format(horaUtc);
-    const m = Number(e.magnitud);
-    const cls = m >= 4 ? 'high' : (m >= 3 ? 'med' : 'low');
-    list.innerHTML = `
-      <div class="event-row">
-        <div class="event-meta">
-          <span>${horaStr} SV</span>
-          <span>${e.fuente || 'N/A'}</span>
-        </div>
-        <div class="event-mag ${cls}">M${m.toFixed(1)}</div>
-        <div class="event-loc">Lat ${e.lat?.toFixed(2)} · Lng ${e.lng?.toFixed(2)} · ${e.profundidad_km} km</div>
-      </div>
-      <div class="empty-state" style="margin-top:10px;">
-        ${total > 1 ? `Y ${total - 1} más · Jarvis tiene los detalles` : 'Único evento detectado'}
-      </div>
-    `;
-  } else {
+  if (eventos.length === 0) {
     list.innerHTML = '<div class="empty-state">Sin eventos en 24h</div>';
+  } else {
+    list.innerHTML = eventos.slice(0, 10).map(e => {
+      const horaStr = new Intl.DateTimeFormat('es-SV', {
+        timeZone: 'America/El_Salvador',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(new Date(e.timestamp_origen));
+      const m = Number(e.magnitud);
+      const cls = m >= 4 ? 'high' : (m >= 3 ? 'med' : 'low');
+      return `
+        <div class="event-row">
+          <div class="event-meta">
+            <span>${horaStr} SV</span>
+            <span>${e.fuente_externa || 'N/A'}</span>
+          </div>
+          <div class="event-mag ${cls}">M${m.toFixed(1)}</div>
+          <div class="event-loc">Lat ${Number(e.latitud).toFixed(2)} · Lng ${Number(e.longitud).toFixed(2)} · ${e.profundidad_km} km</div>
+        </div>
+      `;
+    }).join('');
   }
 
-  // Volcanes (si vienen en respuesta_pantalla.datos.volcanes_estado)
+  // Volcanes con datos reales
   const volList = document.getElementById('volcan-list');
-  const volcanos = volResp?.respuesta_pantalla?.datos?.volcanes || [
-    { nombre: 'Chaparrastique', alerta: 'NORMAL' },
-    { nombre: 'Santa Ana (Ilamatepec)', alerta: 'NORMAL' },
-    { nombre: 'San Vicente', alerta: 'NORMAL' },
-    { nombre: 'San Miguel', alerta: 'NORMAL' },
-  ];
-  volList.innerHTML = volcanos.map(v => {
-    const alerta = v.alerta || v.nivel_alerta_actual || 'NORMAL';
-    const cls = (alerta !== 'NORMAL') ? 'alert-yellow' : '';
-    return `
-      <div class="volcan-row ${cls}">
-        <span class="name">${v.nombre || v.name}</span>
-        <span class="alert">${alerta}</span>
-      </div>
-    `;
-  }).join('');
+  const volcanes = data.volcanes?.lista || [];
+  if (volcanes.length === 0) {
+    volList.innerHTML = '<div class="empty-state">Sin datos de volcanes</div>';
+  } else {
+    volList.innerHTML = volcanes.map(v => {
+      const alerta = v.nivel_alerta_actual || 'NORMAL';
+      const cls = (alerta !== 'NORMAL') ? 'alert-yellow' : '';
+      return `
+        <div class="volcan-row ${cls}">
+          <span class="name">${v.nombre}</span>
+          <span class="alert">${alerta}</span>
+        </div>
+      `;
+    }).join('');
+
+    // Agregar volcanes al mapa también
+    volcanes.forEach(v => {
+      if (v.lat && v.lng) {
+        addVolcanMarker({
+          nombre: v.nombre,
+          lat: v.lat,
+          lng: v.lng,
+          estado_actividad: v.estado_actividad,
+          nivel_alerta_actual: v.nivel_alerta_actual,
+          forecast_mensaje: v.forecast_mensaje,
+        });
+      }
+    });
+  }
 }
 
+document.getElementById('refresh-btn').addEventListener('click', loadData);
 
 // Auto-refresh cada 60 seg
 setInterval(loadData, 60000);
