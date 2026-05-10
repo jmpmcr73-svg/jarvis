@@ -423,8 +423,6 @@ html, body {
   </div>
   <div class="c">
     <span><span class="status-dot"></span><span id="status-text">SISTEMA OPERATIVO</span></span>
-    <span style="color:var(--fg-3);">·</span>
-    <span id="clock">00:00:00 SV</span>
   </div>
   <div class="r">
     <span>v1.3 · STELLA MARIS</span>
@@ -569,14 +567,6 @@ let audioUnlocked = false;
 let voicesReady = false;
 
 // === Reloj ===
-function updateClock() {
-  const now = new Date();
-  const fmt = new Intl.DateTimeFormat('es-SV', {
-    timeZone: 'America/El_Salvador',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-  });
-  document.getElementById('clock').textContent = fmt.format(now) + ' SV';
-}
 function updateFooterDate() {
   const now = new Date();
   const fmt = new Intl.DateTimeFormat('es-SV', {
@@ -585,8 +575,6 @@ function updateFooterDate() {
   });
   document.getElementById('footer-date').textContent = fmt.format(now).replace(/ /g, '-').replace('.', '');
 }
-setInterval(updateClock, 1000);
-updateClock();
 updateFooterDate();
 
 // === Estados visuales ===
