@@ -1,0 +1,42 @@
+{
+  "name": "Jarvis · Akasha SEC",
+  "short_name": "Jarvis",
+  "description": "Asistente IA · Alejandría Steam Labs",
+  "start_url": "/kiosk",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#000510",
+  "theme_color": "#00f0ff",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Kiosk",
+      "url": "/kiosk",
+      "description": "Conversar con Jarvis"
+    },
+    {
+      "name": "MOVE",
+      "url": "/move",
+      "description": "Dashboard sismos en tiempo real"
+    },
+    {
+      "name": "Wallpaper",
+      "url": "/wallpaper",
+      "description": "Modo holograma sin UI"
+    }
+  ]
+}

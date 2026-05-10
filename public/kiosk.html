@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es" class="notranslate" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="google" content="notranslate">
+<title>JARVIS · Akasha SEC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #000510; --abyss: #020a18; --deep: #051528; --mid: #0a2540;
+  --line: #0d3a5c; --line-2: #134d76;
+  --cyan: #00f0ff; --cyan-dim: #00b8c4; --cyan-deep: #006d75; --cyan-glow: #4dffe8;
+  --amber: #ffaa00; --crimson: #ff3a4f; --emerald: #00ff8c;
+  --fg: #e6f5ff; --fg-2: #92b8d4; --fg-3: #547294;
+  --fd: 'Cormorant Garamond', Georgia, serif;
+  --fs: 'Orbitron', sans-serif;
+  --fm: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--void); color: var(--fg);
+  font-family: var(--fs); font-size: 14px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bg-grid {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(0,240,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,240,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none; z-index: 1;
+}
+.bg-glow {
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 800px 400px at 50% 100%, rgba(0,240,255,0.12), transparent 70%),
+    radial-gradient(ellipse 600px 600px at 50% 50%, rgba(0,109,117,0.08), transparent 60%),
+    radial-gradient(ellipse 400px 200px at 50% 0%, rgba(255,170,0,0.04), transparent 70%);
+  pointer-events: none; z-index: 2;
+}
+.scanline {
+  position: fixed; left: 0; right: 0; height: 2px;
+  background: linear-gradient(to right, transparent, rgba(0,240,255,0.6), transparent);
+  z-index: 4;
+  animation: scan 8s linear infinite;
+  pointer-events: none;
+}
+@keyframes scan {
+  0% { top: -10px; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100vh; opacity: 0; }
+}
+
+.topbar {
+  position: relative; z-index: 10;
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  padding: 14px 32px;
+  background: linear-gradient(to bottom, rgba(2,10,24,0.95), rgba(2,10,24,0.7));
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+  font-family: var(--fm); font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+}
+.topbar .l { color: var(--fg-2); display: flex; gap: 24px; align-items: center; }
+.topbar .l strong {
+  font-family: var(--fs); font-weight: 900; font-size: 13px;
+  color: var(--cyan); letter-spacing: 0.3em;
+  text-shadow: 0 0 20px rgba(0,240,255,0.6);
+}
+.topbar .c { display: flex; gap: 24px; justify-content: center; align-items: center; color: var(--fg-3); }
+.topbar .r { display: flex; gap: 24px; justify-content: flex-end; align-items: center; color: var(--fg-2); }
+
+.status-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--emerald); margin-right: 8px;
+  box-shadow: 0 0 12px var(--emerald);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.main {
+  position: relative; z-index: 10;
+  display: grid; grid-template-columns: 320px 1fr 320px;
+  height: calc(100vh - 47px - 50px);
+  padding: 20px;
+}
+
+.panel-left { display: flex; flex-direction: column; gap: 16px; padding-right: 16px; }
+
+.module {
+  background: linear-gradient(135deg, rgba(13,58,92,0.3), rgba(5,21,40,0.5));
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--cyan);
+  padding: 16px; position: relative;
+  backdrop-filter: blur(8px);
+}
+.module::before {
+  content: ''; position: absolute; top: -1px; right: -1px;
+  width: 12px; height: 12px;
+  border-top: 1px solid var(--cyan);
+  border-right: 1px solid var(--cyan);
+}
+.module-label {
+  font-family: var(--fm); font-size: 9px; letter-spacing: 0.2em;
+  color: var(--cyan-dim); text-transform: uppercase; margin-bottom: 10px;
+}
+.module-value {
+  font-family: var(--fd); font-size: 28px; font-weight: 500; font-style: italic;
+  color: var(--fg); line-height: 1; margin-bottom: 4px;
+}
+.module-detail { font-family: var(--fm); font-size: 10px; color: var(--fg-3); }
+
+.system-list {
+  background: linear-gradient(135deg, rgba(13,58,92,0.2), rgba(5,21,40,0.4));
+  border: 1px solid var(--line);
+  padding: 16px; flex: 1; overflow-y: auto;
+}
+.list-title {
+  font-family: var(--fm); font-size: 9px; letter-spacing: 0.22em;
+  color: var(--cyan); text-transform: uppercase; margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+.list-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid rgba(13,58,92,0.5);
+  font-family: var(--fm); font-size: 11px;
+}
+.list-row:last-child { border-bottom: none; }
+.list-row .k { color: var(--fg-2); letter-spacing: 0.06em; }
+.list-row .v { color: var(--fg); font-weight: 500; }
+.list-row .v.ok { color: var(--emerald); }
+
+.center {
+  position: relative;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: space-between;
+  padding: 0 16px;
+}
+
+.holo-stage {
+  position: relative; flex: 1; width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 360px;
+}
+
+.jarvis-holo {
+  position: relative; width: 460px; height: 460px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.holo-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(0,240,255,0.15), transparent 60%);
+  border-radius: 50%; filter: blur(20px);
+  animation: bg-pulse 4s ease-in-out infinite;
+}
+@keyframes bg-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.holo-svg { position: relative; width: 100%; height: 100%; z-index: 2; }
+
+.holo-status {
+  position: absolute;
+  bottom: 8%; left: 50%; transform: translateX(-50%);
+  font-family: var(--fm); font-size: 11px;
+  letter-spacing: 0.3em; color: var(--cyan);
+  text-transform: uppercase; text-align: center;
+  text-shadow: 0 0 12px rgba(0,240,255,0.6);
+  z-index: 3; pointer-events: none;
+}
+.holo-status.thinking { color: var(--amber); text-shadow: 0 0 12px rgba(255,170,0,0.6); }
+.holo-status.speaking { color: var(--emerald); text-shadow: 0 0 12px rgba(0,255,140,0.6); }
+.holo-status.idle { color: var(--fg-3); text-shadow: none; }
+
+.interact { width: 100%; display: flex; flex-direction: column; gap: 10px; padding: 12px 0; }
+
+.transcript-box {
+  background: linear-gradient(135deg, rgba(13,58,92,0.3), rgba(5,21,40,0.5));
+  border: 1px solid var(--line);
+  padding: 12px 16px;
+  font-family: var(--fd); font-size: 16px; font-style: italic;
+  color: var(--fg); min-height: 46px;
+  display: flex; align-items: center; position: relative;
+}
+.transcript-box::before {
+  content: '› '; color: var(--cyan); font-family: var(--fm); font-style: normal;
+  margin-right: 8px;
+}
+.transcript-box.empty { color: var(--fg-3); font-style: italic; }
+
+.input-row { display: flex; gap: 8px; align-items: stretch; }
+.input-text {
+  flex: 1; min-width: 0;
+  background: rgba(5,21,40,0.6);
+  border: 1px solid var(--line);
+  border-bottom: 2px solid var(--cyan);
+  padding: 12px 16px;
+  font-family: var(--fm); font-size: 14px; color: var(--fg);
+  letter-spacing: 0.04em; outline: none; transition: all 0.2s;
+  border-radius: 0;
+  -webkit-appearance: none;
+}
+.input-text:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(0,240,255,0.2);
+}
+.input-text::placeholder { color: var(--fg-3); }
+
+.btn {
+  background: transparent;
+  border: 1px solid var(--cyan-dim);
+  color: var(--cyan);
+  padding: 12px 22px;
+  font-family: var(--fs); font-size: 11px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s; font-weight: 500;
+  border-radius: 0;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.btn:hover, .btn:active {
+  background: rgba(0,240,255,0.08);
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(0,240,255,0.3);
+  color: var(--cyan-glow);
+}
+.btn.primary {
+  background: linear-gradient(135deg, rgba(0,240,255,0.15), rgba(0,109,117,0.1));
+  border-color: var(--cyan);
+}
+
+.suggestions { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  padding: 8px 14px;
+  background: rgba(13,58,92,0.4);
+  border: 1px solid var(--line);
+  font-family: var(--fm); font-size: 11px;
+  color: var(--fg-2); letter-spacing: 0.06em;
+  cursor: pointer; transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.chip:hover, .chip:active {
+  border-color: var(--cyan); color: var(--cyan);
+  background: rgba(0,240,255,0.06);
+}
+
+.panel-right {
+  display: flex; flex-direction: column; gap: 16px;
+  padding-left: 16px; overflow-y: auto;
+}
+.history-list {
+  background: linear-gradient(135deg, rgba(13,58,92,0.2), rgba(5,21,40,0.4));
+  border: 1px solid var(--line);
+  padding: 16px; flex: 1;
+  overflow-y: auto; max-height: calc(100vh - 200px);
+}
+.history-empty {
+  text-align: center;
+  font-family: var(--fm); font-size: 10px;
+  letter-spacing: 0.2em; color: var(--fg-3);
+  text-transform: uppercase; padding: 40px 0;
+}
+.history-item {
+  border-bottom: 1px solid rgba(13,58,92,0.5);
+  padding: 12px 0; margin-bottom: 12px;
+}
+.history-item:last-child { border-bottom: none; margin-bottom: 0; }
+.history-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--fm); font-size: 9px;
+  color: var(--fg-3); letter-spacing: 0.12em;
+  margin-bottom: 6px; text-transform: uppercase;
+}
+.history-meta .domain { color: var(--cyan); font-weight: 700; }
+.history-q {
+  font-family: var(--fd); font-style: italic; font-size: 14px;
+  color: var(--fg-2); margin-bottom: 6px; line-height: 1.4;
+}
+.history-q::before { content: '› '; color: var(--cyan); font-style: normal; font-family: var(--fm); }
+.history-a {
+  font-family: var(--fd); font-size: 14px;
+  color: var(--fg); line-height: 1.5;
+  padding-left: 12px;
+  border-left: 2px solid var(--cyan-deep);
+}
+.metric-row {
+  display: flex; gap: 8px; padding-top: 8px;
+  font-family: var(--fm); font-size: 9px;
+  color: var(--fg-3); letter-spacing: 0.06em; text-transform: uppercase;
+}
+.metric-row span { padding: 2px 6px; background: rgba(13,58,92,0.4); }
+
+.bottombar {
+  position: relative; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 32px;
+  background: linear-gradient(to top, rgba(2,10,24,0.95), rgba(2,10,24,0.5));
+  border-top: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+  font-family: var(--fm); font-size: 9px;
+  letter-spacing: 0.16em; color: var(--fg-3);
+  text-transform: uppercase;
+}
+.bottombar strong { color: var(--cyan); }
+
+.ring { fill: none; stroke: var(--cyan); stroke-width: 1; opacity: 0.6; transform-origin: 240px 240px; }
+.ring-1 { animation: rotate-cw 60s linear infinite; }
+.ring-2 { animation: rotate-ccw 90s linear infinite; opacity: 0.4; }
+.ring-3 { animation: rotate-cw 120s linear infinite; opacity: 0.3; }
+@keyframes rotate-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes rotate-ccw { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+
+.ring-text {
+  font-family: var(--fm); font-size: 8px; letter-spacing: 0.4em;
+  fill: var(--cyan); opacity: 0.6; text-transform: uppercase;
+}
+
+.face-img {
+  position: absolute;
+  width: 320px; height: 320px;
+  object-fit: cover; border-radius: 50%;
+  z-index: 1; opacity: 0.9;
+  mix-blend-mode: screen;
+  filter: contrast(1.1) brightness(1.1) hue-rotate(-5deg);
+  transition: filter 0.4s;
+}
+
+.state-thinking .ring { stroke: var(--amber); animation-duration: 30s; }
+.state-thinking .face-img { filter: contrast(1.1) brightness(1.1) hue-rotate(30deg); }
+.state-speaking .ring { stroke: var(--emerald); }
+.state-speaking .face-img { filter: contrast(1.1) brightness(1.15) hue-rotate(60deg); }
+
+.audio-wave {
+  display: flex; gap: 3px; align-items: center; justify-content: center;
+  height: 30px; position: absolute;
+  bottom: -10px; left: 50%; transform: translateX(-50%);
+  z-index: 4; pointer-events: none;
+}
+.audio-wave .bar {
+  width: 3px; background: var(--cyan);
+  border-radius: 2px;
+  box-shadow: 0 0 4px var(--cyan);
+  opacity: 0;
+}
+.state-speaking .audio-wave .bar {
+  animation: wave 0.6s ease-in-out infinite; opacity: 1;
+}
+.audio-wave .bar:nth-child(1) { animation-delay: 0s; height: 8px; }
+.audio-wave .bar:nth-child(2) { animation-delay: 0.1s; height: 14px; }
+.audio-wave .bar:nth-child(3) { animation-delay: 0.2s; height: 20px; }
+.audio-wave .bar:nth-child(4) { animation-delay: 0.3s; height: 26px; }
+.audio-wave .bar:nth-child(5) { animation-delay: 0.4s; height: 20px; }
+.audio-wave .bar:nth-child(6) { animation-delay: 0.5s; height: 14px; }
+.audio-wave .bar:nth-child(7) { animation-delay: 0.6s; height: 8px; }
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.4; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.thinking-dots { display: inline-block; }
+.thinking-dots::after { content: ''; animation: dots 1.4s steps(4, end) infinite; }
+@keyframes dots {
+  0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; }
+}
+
+@media (max-width: 1100px) {
+  .main { grid-template-columns: 1fr; gap: 16px; }
+  .panel-left, .panel-right { display: none; }
+  .jarvis-holo { width: 360px; height: 360px; }
+  .face-img { width: 240px; height: 240px; }
+}
+@media (max-width: 700px) {
+  .topbar { padding: 10px 16px; font-size: 9px; }
+  .topbar .c { display: none; }
+  .main { padding: 12px; }
+  .jarvis-holo { width: 280px; height: 280px; }
+  .face-img { width: 180px; height: 180px; }
+  .ring-text { font-size: 7px; }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--abyss); }
+::-webkit-scrollbar-thumb { background: var(--cyan-deep); }
+
+.audio-banner {
+  background: linear-gradient(135deg, rgba(255,170,0,0.15), rgba(0,109,117,0.1));
+  border: 1px solid var(--amber);
+  padding: 10px 14px;
+  font-family: var(--fm); font-size: 11px;
+  color: var(--amber); letter-spacing: 0.06em;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.audio-banner.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="scanline"></div>
+
+<header class="topbar">
+  <div class="l">
+    <strong>JARVIS</strong>
+    <span style="color:var(--fg-3);">·</span>
+    <span>AKASHA SEC</span>
+  </div>
+  <div class="c">
+    <span><span class="status-dot"></span><span id="status-text">SISTEMA OPERATIVO</span></span>
+    <span style="color:var(--fg-3);">·</span>
+    <span id="clock">00:00:00 SV</span>
+  </div>
+  <div class="r">
+    <span>v1.3 · STELLA MARIS</span>
+  </div>
+</header>
+
+<main class="main">
+
+  <aside class="panel-left">
+    <div class="module">
+      <div class="module-label">SESIÓN ACTIVA</div>
+      <div class="module-value" style="color:var(--cyan);">AKS-JOSE</div>
+      <div class="module-detail">Identificado · embedding v1</div>
+    </div>
+
+    <div class="module" style="border-left-color:var(--amber);">
+      <div class="module-label">QUERIES HOY</div>
+      <div class="module-value" id="query-count" style="color:var(--amber);">0</div>
+      <div class="module-detail">Costo total · <span id="cost-total">$0.0000</span></div>
+    </div>
+
+    <div class="system-list">
+      <div class="list-title">ESTADO SISTEMAS</div>
+      <div class="list-row"><span class="k">Voz Web (TTS)</span><span class="v" id="sys-tts">verificando</span></div>
+      <div class="list-row"><span class="k">Cerebro</span><span class="v ok">Gemini 2.5 Flash</span></div>
+      <div class="list-row"><span class="k">Edge fn</span><span class="v ok">jarvis-route</span></div>
+      <div class="list-row"><span class="k">Dominio idworld</span><span class="v ok">activo</span></div>
+      <div class="list-row"><span class="k">KRONOS</span><span class="v ok">conectado</span></div>
+      <div class="list-row"><span class="k">Latencia avg</span><span class="v" id="latency-avg">—</span></div>
+    </div>
+  </aside>
+
+  <section class="center">
+    <div class="holo-stage">
+      <div class="jarvis-holo" id="holo-container">
+        <div class="holo-bg"></div>
+
+        <img class="face-img" src="jarvis-holo.png" alt="Jarvis" onerror="this.style.display='none'">
+
+        <svg class="holo-svg" viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="haloGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#00f0ff" stop-opacity="0"/>
+              <stop offset="80%" stop-color="#00f0ff" stop-opacity="0.1"/>
+              <stop offset="95%" stop-color="#00f0ff" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <circle cx="240" cy="240" r="220" fill="url(#haloGrad)"/>
+
+          <g class="ring ring-1">
+            <circle cx="240" cy="240" r="220"/>
+            <path id="textPath1" d="M 240,20 a 220,220 0 1,1 -0.1,0" fill="none"/>
+            <text class="ring-text">
+              <textPath href="#textPath1" startOffset="0%">
+                AKASHA SEC · JARVIS · ALEJANDRÍA STEAM LABS · MOVE STELLA MARIS · AKASHA SEC · JARVIS ·
+              </textPath>
+            </text>
+          </g>
+
+          <g class="ring ring-2">
+            <circle cx="240" cy="240" r="200" stroke-dasharray="4 8"/>
+            <circle cx="240" cy="40" r="3" fill="#00f0ff"/>
+            <circle cx="40" cy="240" r="3" fill="#00f0ff"/>
+            <circle cx="240" cy="440" r="3" fill="#00f0ff"/>
+            <circle cx="440" cy="240" r="3" fill="#00f0ff"/>
+          </g>
+
+          <g class="ring ring-3">
+            <circle cx="240" cy="240" r="178" stroke-width="0.5"/>
+            <g stroke-width="1">
+              <line x1="240" y1="62" x2="240" y2="74"/>
+              <line x1="240" y1="406" x2="240" y2="418"/>
+              <line x1="62" y1="240" x2="74" y2="240"/>
+              <line x1="406" y1="240" x2="418" y2="240"/>
+            </g>
+          </g>
+
+          <g opacity="0.6">
+            <circle cx="240" cy="240" r="4" fill="#00f0ff"/>
+            <circle cx="240" cy="240" r="8" fill="none" stroke="#00f0ff" stroke-width="0.5"/>
+          </g>
+        </svg>
+
+        <div class="audio-wave">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div>
+        </div>
+
+        <div class="holo-status idle" id="holo-status">EN LÍNEA</div>
+      </div>
+    </div>
+
+    <div class="interact">
+      <div class="audio-banner" id="audio-banner">🔊 Tocá aquí para activar audio (iOS requiere primer tap)</div>
+
+      <div class="transcript-box empty" id="transcript">Escribí tu consulta a Jarvis</div>
+
+      <div class="input-row">
+        <input type="text" class="input-text" id="input"
+               placeholder="Escribí a Jarvis..." autocomplete="off"
+               autocorrect="off" autocapitalize="off">
+        <button class="btn primary" id="send-btn">Enviar</button>
+      </div>
+
+      <div class="suggestions">
+        <span class="chip" data-q="Hola Jarvis">› Hola</span>
+        <span class="chip" data-q="Sismos hoy en El Salvador">› Sismos hoy</span>
+        <span class="chip" data-q="¿Qué hora es?">› Hora</span>
+        <span class="chip" data-q="Estado de los volcanes">› Volcanes</span>
+        <span class="chip" data-q="¿Cómo está el sistema idworld?">› idworld</span>
+        <span class="chip" id="clear-chip" style="border-color:var(--crimson);color:var(--crimson);">› Limpiar</span>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel-right">
+    <div style="font-family: var(--fm); font-size: 10px; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase; padding-bottom: 8px; border-bottom: 1px solid var(--line);">HISTORIAL</div>
+    <div class="history-list" id="history">
+      <div class="history-empty">Sin interacciones</div>
+    </div>
+  </aside>
+
+</main>
+
+<footer class="bottombar">
+  <div>ALEJANDRÍA STEAM LABS · BIOTEC SV · <strong id="footer-date">9-may-2026</strong></div>
+  <div>JARVIS v1.3 · STELLA MARIS · KRONOS</div>
+</footer>
+
+<script>
+const JARVIS_ROUTE_URL = '/api/jarvis';  // proxy Vercel → Supabase
+const SUPABASE_ANON_KEY = '';  // no se necesita · proxy maneja auth
+
+let queryCount = 0;
+let totalCost = 0;
+let latencies = [];
+let history = [];
+let audioUnlocked = false;
+let voicesReady = false;
+
+// === Reloj ===
+function updateClock() {
+  const now = new Date();
+  const sv = new Date(now.getTime() - 6 * 3600 * 1000);
+  const h = sv.getUTCHours().toString().padStart(2, '0');
+  const m = sv.getUTCMinutes().toString().padStart(2, '0');
+  const s = sv.getUTCSeconds().toString().padStart(2, '0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s} SV`;
+}
+function updateFooterDate() {
+  const now = new Date();
+  const sv = new Date(now.getTime() - 6 * 3600 * 1000);
+  const dd = sv.getUTCDate();
+  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  document.getElementById('footer-date').textContent = `${dd}-${months[sv.getUTCMonth()]}-${sv.getUTCFullYear()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+updateFooterDate();
+
+// === Estados visuales ===
+function setState(state, message) {
+  const container = document.getElementById('holo-container');
+  const status = document.getElementById('holo-status');
+  container.classList.remove('state-thinking', 'state-speaking');
+  status.classList.remove('idle', 'thinking', 'speaking');
+  if (state === 'thinking') {
+    container.classList.add('state-thinking');
+    status.classList.add('thinking');
+    status.innerHTML = (message || 'PROCESANDO') + '<span class="thinking-dots"></span>';
+  } else if (state === 'speaking') {
+    container.classList.add('state-speaking');
+    status.classList.add('speaking');
+    status.textContent = message || 'RESPONDIENDO';
+  } else {
+    status.classList.add('idle');
+    status.textContent = message || 'EN LÍNEA';
+  }
+}
+
+function setTranscript(text) {
+  const t = document.getElementById('transcript');
+  if (!text) { t.classList.add('empty'); t.textContent = 'Escribí tu consulta a Jarvis'; }
+  else { t.classList.remove('empty'); t.textContent = text; }
+}
+
+// === History ===
+function addHistory(q, a, meta) {
+  history.unshift({ q, a, meta, time: new Date() });
+  if (history.length > 20) history.pop();
+  renderHistory();
+  queryCount++;
+  document.getElementById('query-count').textContent = queryCount;
+  if (meta && meta.costo_estimado_usd) {
+    totalCost += meta.costo_estimado_usd;
+    document.getElementById('cost-total').textContent = '$' + totalCost.toFixed(4);
+  }
+  if (meta && meta.latencia_total_ms) {
+    latencies.push(meta.latencia_total_ms);
+    const avg = Math.round(latencies.reduce((a,b) => a+b, 0) / latencies.length);
+    document.getElementById('latency-avg').textContent = (avg/1000).toFixed(1) + 's';
+  }
+}
+
+function renderHistory() {
+  const el = document.getElementById('history');
+  if (history.length === 0) {
+    el.innerHTML = '<div class="history-empty">Sin interacciones</div>';
+    return;
+  }
+  el.innerHTML = history.map(h => {
+    const t = h.time.toTimeString().substring(0, 8);
+    const dom = (h.meta && h.meta.dominio_enrutado) || '—';
+    const lat = (h.meta && h.meta.latencia_total_ms) ? (h.meta.latencia_total_ms/1000).toFixed(1)+'s' : '';
+    const cost = (h.meta && h.meta.costo_estimado_usd) ? '$'+h.meta.costo_estimado_usd.toFixed(4) : '';
+    return `
+      <div class="history-item">
+        <div class="history-meta"><span>${t}</span><span class="domain">${dom}</span></div>
+        <div class="history-q">${escapeHtml(h.q)}</div>
+        <div class="history-a">${escapeHtml(h.a)}</div>
+        <div class="metric-row">
+          ${lat ? '<span>'+lat+'</span>' : ''}
+          ${cost ? '<span>'+cost+'</span>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// === TTS WEB ===
+function unlockAudio() {
+  if (audioUnlocked) return;
+  if (!('speechSynthesis' in window)) return;
+  // Truco iOS · hablar texto vacío con volumen 0 al primer click
+  const u = new SpeechSynthesisUtterance('');
+  u.volume = 0;
+  u.rate = 10;
+  window.speechSynthesis.speak(u);
+  audioUnlocked = true;
+  document.getElementById('audio-banner').classList.add('hidden');
+  document.getElementById('sys-tts').textContent = 'desbloqueado';
+  document.getElementById('sys-tts').className = 'v ok';
+  console.log('[Audio] Desbloqueado tras primer tap');
+}
+
+function speakResponse(text) {
+  if (!text) return;
+  if (!('speechSynthesis' in window)) {
+    console.warn('[TTS] No disponible');
+    return;
+  }
+  if (!audioUnlocked) {
+    console.warn('[TTS] Audio no desbloqueado · tap en banner primero');
+    return;
+  }
+
+  // En iOS · pequeño delay después de cancel
+  window.speechSynthesis.cancel();
+
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'es-ES';
+    u.rate = 1.0;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+
+    // Buscar voz española
+    const voices = window.speechSynthesis.getVoices();
+    const esVoices = voices.filter(v => v.lang.startsWith('es'));
+    const preferred = esVoices.find(v => /Mónica|Monica|Paulina|Marisol|Diego|Jorge|Helena/i.test(v.name)) || esVoices[0];
+    if (preferred) {
+      u.voice = preferred;
+      console.log('[TTS] Usando voz:', preferred.name);
+    }
+
+    u.onstart = () => console.log('[TTS] Speaking');
+    u.onend = () => console.log('[TTS] Done');
+    u.onerror = (e) => console.warn('[TTS] Error:', e.error);
+
+    window.speechSynthesis.speak(u);
+  }, 100);
+}
+
+function initVoices() {
+  if (!('speechSynthesis' in window)) {
+    document.getElementById('sys-tts').textContent = 'no soportado';
+    return;
+  }
+  const tryLoad = () => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      voicesReady = true;
+      const esVoices = voices.filter(v => v.lang.startsWith('es'));
+      console.log('[TTS] Voces ES:', esVoices.map(v => v.name).join(', '));
+    }
+  };
+  tryLoad();
+  if ('onvoiceschanged' in window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = tryLoad;
+  }
+}
+initVoices();
+
+// === Ask Jarvis ===
+async function askJarvis(query) {
+  if (!query || !query.trim()) return;
+  query = query.trim();
+
+  // Desbloquear audio en este tap (importante para iOS)
+  unlockAudio();
+
+  setTranscript(query);
+  setState('thinking', 'PROCESANDO');
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (SUPABASE_ANON_KEY) {
+      headers['Authorization'] = 'Bearer ' + SUPABASE_ANON_KEY;
+      headers['apikey'] = SUPABASE_ANON_KEY;
+    }
+
+    const res = await fetch(JARVIS_ROUTE_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ query, origen_canal: 'web_kiosk', origen_persona_id: 'AKS-JOSE' })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error('HTTP ' + res.status + ': ' + errText);
+    }
+
+    const data = await res.json();
+    const respuesta = data.respuesta_voz || 'Sin respuesta';
+    const meta = data.metadata || {};
+
+    setState('speaking', 'RESPONDIENDO');
+    addHistory(query, respuesta, meta);
+
+    // TTS web · hablar la respuesta
+    speakResponse(respuesta);
+
+    // Volver a idle según length de respuesta
+    const speakDuration = Math.max(3000, respuesta.length * 90);
+    setTimeout(() => setState('idle'), speakDuration);
+
+    return data;
+  } catch (e) {
+    console.error('[Jarvis] Error:', e);
+    setState('idle', 'ERROR DE CONEXIÓN');
+    addHistory(query, 'Error: ' + e.message, {});
+    setTimeout(() => setState('idle'), 3000);
+  }
+}
+
+// === Eventos ===
+document.getElementById('send-btn').addEventListener('click', () => {
+  const input = document.getElementById('input');
+  if (input.value.trim()) {
+    askJarvis(input.value);
+    input.value = '';
+  }
+});
+
+document.getElementById('input').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') document.getElementById('send-btn').click();
+});
+
+document.getElementById('audio-banner').addEventListener('click', () => {
+  unlockAudio();
+});
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    if (chip.id === 'clear-chip') {
+      history = [];
+      queryCount = 0;
+      totalCost = 0;
+      latencies = [];
+      renderHistory();
+      document.getElementById('query-count').textContent = '0';
+      document.getElementById('cost-total').textContent = '$0.0000';
+      document.getElementById('latency-avg').textContent = '—';
+      setTranscript('');
+      setState('idle');
+      return;
+    }
+    askJarvis(chip.dataset.q);
+  });
+});
+
+// Auto-focus solo en desktop
+if (!('ontouchstart' in window)) {
+  document.getElementById('input').focus();
+}
+
+setState('idle', 'EN LÍNEA');
+console.log('[JARVIS Kiosk] v1.3 · TTS web only · sin STT');
+</script>
+</body>
+</html>

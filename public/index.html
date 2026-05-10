@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es" class="notranslate" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000510">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>JARVIS · Akasha SEC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #000510; --abyss: #020a18; --cyan: #00f0ff; --cyan-dim: #00b8c4;
+  --cyan-deep: #006d75; --line: #0d3a5c; --fg: #e6f5ff; --fg-2: #92b8d4; --fg-3: #547294;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--void); color: var(--fg);
+  font-family: 'Orbitron', sans-serif;
+  min-height: 100vh; overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.bg-grid {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(0,240,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,240,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none; z-index: 1;
+}
+.bg-glow {
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse 800px 400px at 50% 50%, rgba(0,240,255,0.12), transparent 70%);
+  pointer-events: none; z-index: 2;
+}
+.scanline {
+  position: fixed; left: 0; right: 0; height: 2px;
+  background: linear-gradient(to right, transparent, rgba(0,240,255,0.6), transparent);
+  z-index: 4; animation: scan 8s linear infinite; pointer-events: none;
+}
+@keyframes scan {
+  0% { top: -10px; opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { top: 100vh; opacity: 0; }
+}
+.container {
+  position: relative; z-index: 10;
+  max-width: 800px; margin: 0 auto;
+  padding: 60px 20px 40px;
+  text-align: center;
+}
+.brand {
+  font-size: 14px; font-weight: 500; letter-spacing: 0.5em;
+  color: var(--cyan-dim); margin-bottom: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+h1 {
+  font-size: clamp(48px, 12vw, 120px); font-weight: 900;
+  letter-spacing: 0.15em; color: var(--cyan);
+  text-shadow: 0 0 30px rgba(0,240,255,0.5);
+  margin-bottom: 8px;
+}
+.tagline {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: clamp(16px, 4vw, 24px);
+  color: var(--fg-2); margin-bottom: 4px;
+}
+.org {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.25em;
+  color: var(--fg-3); text-transform: uppercase;
+  margin-bottom: 50px;
+}
+
+.modes {
+  display: grid; gap: 16px;
+  grid-template-columns: 1fr;
+  margin-top: 30px;
+}
+@media (min-width: 600px) {
+  .modes { grid-template-columns: repeat(3, 1fr); }
+}
+
+.mode-card {
+  background: linear-gradient(135deg, rgba(13,58,92,0.3), rgba(5,21,40,0.5));
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--cyan);
+  padding: 30px 20px;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+  cursor: pointer;
+  display: block;
+}
+.mode-card::before {
+  content: ''; position: absolute; top: -1px; right: -1px;
+  width: 16px; height: 16px;
+  border-top: 1px solid var(--cyan);
+  border-right: 1px solid var(--cyan);
+}
+.mode-card:hover {
+  border-left-color: var(--cyan);
+  box-shadow: 0 0 30px rgba(0,240,255,0.15);
+  transform: translateY(-2px);
+}
+.mode-card .icon {
+  font-size: 28px; margin-bottom: 12px;
+  color: var(--cyan);
+}
+.mode-card .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.25em;
+  color: var(--cyan-dim); text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.mode-card .title {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 26px;
+  color: var(--fg); margin-bottom: 8px;
+  font-weight: 500;
+}
+.mode-card .desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--fg-3);
+  line-height: 1.5;
+}
+
+.footer {
+  margin-top: 60px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.2em;
+  color: var(--fg-3); text-transform: uppercase;
+  text-align: center;
+  padding-bottom: 30px;
+}
+.footer strong { color: var(--cyan); }
+
+.ring-anim {
+  width: 240px; height: 240px;
+  margin: 30px auto;
+  position: relative;
+}
+.ring-anim svg { width: 100%; height: 100%; }
+.ring-svg-1, .ring-svg-2, .ring-svg-3 {
+  fill: none; stroke: var(--cyan);
+  transform-origin: 120px 120px;
+}
+.ring-svg-1 { stroke-width: 1; opacity: 0.6; animation: rot-cw 30s linear infinite; }
+.ring-svg-2 { stroke-width: 0.5; opacity: 0.4; animation: rot-ccw 45s linear infinite; }
+.ring-svg-3 { stroke-width: 1; opacity: 0.3; animation: rot-cw 60s linear infinite; }
+@keyframes rot-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes rot-ccw { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+
+.center-dot {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 12px; height: 12px;
+  background: var(--cyan); border-radius: 50%;
+  box-shadow: 0 0 30px rgba(0,240,255,1);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%,-50%) scale(1.2); }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="scanline"></div>
+
+<div class="container">
+  <div class="brand">AKASHA SEC</div>
+  <h1>JARVIS</h1>
+  <div class="tagline">Asistente artificial</div>
+  <div class="org">ALEJANDRÍA STEAM LABS · BIOTEC SV</div>
+
+  <div class="ring-anim">
+    <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+      <circle class="ring-svg-1" cx="120" cy="120" r="110"/>
+      <circle class="ring-svg-2" cx="120" cy="120" r="85" stroke-dasharray="4 8"/>
+      <circle class="ring-svg-3" cx="120" cy="120" r="60"/>
+    </svg>
+    <div class="center-dot"></div>
+  </div>
+
+  <div class="modes">
+    <a href="/kiosk" class="mode-card">
+      <div class="icon">◉</div>
+      <div class="label">MODO 01</div>
+      <div class="title">Kiosk</div>
+      <div class="desc">Conversación bidireccional · texto y voz · interfaz completa</div>
+    </a>
+
+    <a href="/move" class="mode-card">
+      <div class="icon">◢</div>
+      <div class="label">MODO 02</div>
+      <div class="title">Move</div>
+      <div class="desc">Dashboard sismos tiempo real · mapa · alertas estructurales</div>
+    </a>
+
+    <a href="/wallpaper" class="mode-card">
+      <div class="icon">◯</div>
+      <div class="label">MODO 03</div>
+      <div class="title">Wallpaper</div>
+      <div class="desc">Holograma fullscreen · ambiente · sin UI · ideal para pantalla</div>
+    </a>
+  </div>
+
+  <div class="footer">
+    JARVIS v1.0 · STELLA MARIS · KRONOS ·
+    <strong>jarvis.idworld.live</strong>
+  </div>
+</div>
+
+</body>
+</html>

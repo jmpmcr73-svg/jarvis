@@ -1,0 +1,15 @@
+{
+  "name": "jarvis",
+  "version": "1.0.0",
+  "description": "Jarvis · Akasha SEC · Asistente IA Alejandría Steam Labs",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve public -p 8080",
+    "build": "echo 'Static · no build'"
+  },
+  "author": "Jose Pinto Mesen <jmpmcr73@>",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  }
+}

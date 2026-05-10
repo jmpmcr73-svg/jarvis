@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000510">
+<title>Jarvis · Wallpaper</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+:root {
+  --void: #000510; --cyan: #00f0ff; --cyan-deep: #006d75;
+  --fg: #e6f5ff; --fg-3: #547294;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--void); color: var(--fg);
+  height: 100vh; width: 100vw;
+  overflow: hidden;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+.bg-grid {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(0,240,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,240,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px; pointer-events: none;
+}
+.bg-glow {
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse 100% 60% at 50% 50%, rgba(0,240,255,0.15), transparent 70%);
+  pointer-events: none;
+}
+.scan {
+  position: fixed; left: 0; right: 0; height: 2px;
+  background: linear-gradient(to right, transparent, rgba(0,240,255,0.4), transparent);
+  animation: scan 12s linear infinite; pointer-events: none;
+}
+@keyframes scan {
+  0% { top: -10px; opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { top: 100vh; opacity: 0; }
+}
+
+.holo {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(80vw, 80vh);
+  height: min(80vw, 80vh);
+  display: flex; align-items: center; justify-content: center;
+}
+.halo {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(0,240,255,0.2), transparent 60%);
+  border-radius: 50%; filter: blur(30px);
+  animation: pulse 5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.face {
+  position: absolute;
+  width: 60%; height: 60%;
+  background-image: url('/jarvis-holo.png');
+  background-size: cover; background-position: center;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  filter: contrast(1.1) brightness(1.1) hue-rotate(-5deg);
+  opacity: 0.85;
+}
+
+.svg-rings { position: absolute; width: 100%; height: 100%; }
+.r1, .r2, .r3 {
+  fill: none; stroke: var(--cyan);
+  transform-origin: center;
+}
+.r1 { stroke-width: 1; opacity: 0.5; animation: cw 60s linear infinite; }
+.r2 { stroke-width: 0.5; opacity: 0.3; animation: ccw 90s linear infinite; }
+.r3 { stroke-width: 1; opacity: 0.4; animation: cw 120s linear infinite; }
+@keyframes cw { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes ccw { from { transform: rotate(0); } to { transform: rotate(-360deg); } }
+
+.ring-text {
+  font-size: 8px; letter-spacing: 0.4em;
+  fill: var(--cyan); opacity: 0.5;
+  text-transform: uppercase;
+}
+
+.info {
+  position: fixed; left: 0; right: 0; bottom: 32px;
+  text-align: center;
+  font-size: 9px; letter-spacing: 0.3em;
+  color: var(--fg-3); text-transform: uppercase;
+  pointer-events: none;
+}
+.info strong { color: var(--cyan); font-weight: 500; }
+
+.brand-top {
+  position: fixed; top: 32px; left: 0; right: 0;
+  text-align: center;
+  font-size: 11px; letter-spacing: 0.5em;
+  color: var(--fg-3); text-transform: uppercase;
+  pointer-events: none;
+}
+
+.clock {
+  position: fixed; top: 60px; left: 0; right: 0;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif; font-weight: 700;
+  font-size: 24px; letter-spacing: 0.15em;
+  color: var(--cyan);
+  text-shadow: 0 0 20px rgba(0,240,255,0.5);
+  pointer-events: none;
+}
+
+@media (max-aspect-ratio: 9/16) {
+  .holo { width: 90vw; height: 90vw; }
+  .clock { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="scan"></div>
+
+<div class="brand-top">JARVIS · AKASHA SEC</div>
+<div class="clock" id="clock">--:--</div>
+
+<div class="holo">
+  <div class="halo"></div>
+  <div class="face"></div>
+  <svg class="svg-rings" viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
+    <g class="r1">
+      <circle cx="240" cy="240" r="220"/>
+      <path id="textPath1" d="M 240,30 a 210,210 0 1,1 -0.1,0" fill="none"/>
+      <text class="ring-text">
+        <textPath href="#textPath1" startOffset="0%">
+          AKASHA SEC · ALEJANDRÍA STEAM LABS · STELLA MARIS · KRONOS · JARVIS · MOVE · IDWORLD ·
+        </textPath>
+      </text>
+    </g>
+    <g class="r2">
+      <circle cx="240" cy="240" r="195" stroke-dasharray="4 8"/>
+      <circle cx="240" cy="40" r="3" fill="#00f0ff"/>
+      <circle cx="40" cy="240" r="3" fill="#00f0ff"/>
+      <circle cx="240" cy="440" r="3" fill="#00f0ff"/>
+      <circle cx="440" cy="240" r="3" fill="#00f0ff"/>
+    </g>
+    <g class="r3">
+      <circle cx="240" cy="240" r="170"/>
+    </g>
+  </svg>
+</div>
+
+<div class="info">
+  <strong id="status">EN LÍNEA</strong>
+  &nbsp;·&nbsp;
+  <span id="datestr">9 MAY 2026</span>
+  &nbsp;·&nbsp;
+  ALEJANDRÍA STEAM LABS
+</div>
+
+<script>
+function tick() {
+  const now = new Date();
+  const sv = new Date(now.getTime() - 6 * 3600 * 1000);
+  const h = String(sv.getUTCHours()).padStart(2, '0');
+  const m = String(sv.getUTCMinutes()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${h}:${m}`;
+  const dd = sv.getUTCDate();
+  const months = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  document.getElementById('datestr').textContent = `${dd} ${months[sv.getUTCMonth()]} ${sv.getUTCFullYear()}`;
+}
+setInterval(tick, 1000); tick();
+</script>
+
+</body>
+</html>
